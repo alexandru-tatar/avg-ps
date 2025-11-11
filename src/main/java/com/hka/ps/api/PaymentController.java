@@ -26,27 +26,54 @@ public class PaymentController {
       @RequestBody AuthorizeRequest request,
       @RequestHeader(name = IDEMPOTENCY_HEADER, required = false) String idempotencyKey) {
 
-    log.info("POST /payments/authorize orderId={} idempotencyKey={}", request.getOrderId(), idempotencyKey);
+    String msgIn = "POST /payments/authorize orderId= " + request.getOrderId()
+        + " idempotencyKey= " + String.valueOf(idempotencyKey);
+    log.info(msgIn);
+    service.publishLog(msgIn);
+
     Payment payment = service.authorize(request, idempotencyKey);
-    PaymentResponse response = toResponse(payment);
-    HttpStatus status = payment.getStatus() == PaymentStatus.DECLINED ? HttpStatus.PAYMENT_REQUIRED : HttpStatus.OK;
-    log.info("Authorize result orderId={} status={}", payment.getOrderId(), status);
-    return ResponseEntity.status(status).body(response);
+
+    HttpStatus status = (payment.getStatus() == PaymentStatus.DECLINED)
+        ? HttpStatus.PAYMENT_REQUIRED : HttpStatus.OK;
+
+    String msgOut = "Authorize result orderId= " + payment.getOrderId()
+        + " status= " + status;
+    log.info(msgOut);
+    service.publishLog(msgOut);
+
+    return ResponseEntity.status(status).body(toResponse(payment));
   }
 
   @PostMapping("/capture")
   public ResponseEntity<PaymentResponse> capture(@RequestBody CaptureRequest request) {
-    log.info("POST /payments/capture orderId={}", request.getOrderId());
+    String msgIn = "POST /payments/capture orderId= " + request.getOrderId();
+    log.info(msgIn);
+    service.publishLog(msgIn);
+
     Payment payment = service.capture(request);
-    log.info("Capture result orderId={} status={}", payment.getOrderId(), payment.getStatus());
+
+    String msgOut = "Capture result orderId= " + payment.getOrderId()
+        + " status= " + payment.getStatus();
+    log.info(msgOut);
+    service.publishLog(msgOut);
+
     return ResponseEntity.ok(toResponse(payment));
   }
 
   @PostMapping("/refund")
   public ResponseEntity<PaymentResponse> refund(@RequestBody RefundRequest request) {
-    log.info("POST /payments/refund orderId={} reason={}", request.getOrderId(), request.getReason());
+    String msgIn = "POST /payments/refund orderId= " + request.getOrderId()
+        + " reason= " + request.getReason();
+    log.info(msgIn);
+    service.publishLog(msgIn);
+
     Payment payment = service.refund(request);
-    log.info("Refund result orderId={} status={}", payment.getOrderId(), payment.getStatus());
+
+    String msgOut = "Refund result orderId= " + payment.getOrderId()
+        + " status= " + payment.getStatus();
+    log.info(msgOut);
+    service.publishLog(msgOut);
+
     return ResponseEntity.ok(toResponse(payment));
   }
 

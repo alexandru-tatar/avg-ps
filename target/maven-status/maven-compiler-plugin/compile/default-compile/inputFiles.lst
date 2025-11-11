@@ -7,5 +7,6 @@
 /Users/alexandru-tatar/Documents/GitHub/avg-team6/avg-ps/src/main/java/com/hka/ps/api/dto/RefundRequest.java
 /Users/alexandru-tatar/Documents/GitHub/avg-team6/avg-ps/src/main/java/com/hka/ps/domain/Payment.java
 /Users/alexandru-tatar/Documents/GitHub/avg-team6/avg-ps/src/main/java/com/hka/ps/domain/PaymentStatus.java
+/Users/alexandru-tatar/Documents/GitHub/avg-team6/avg-ps/src/main/java/com/hka/ps/publisher/PsPublisher.java
 /Users/alexandru-tatar/Documents/GitHub/avg-team6/avg-ps/src/main/java/com/hka/ps/repo/PaymentRepository.java
 /Users/alexandru-tatar/Documents/GitHub/avg-team6/avg-ps/src/main/java/com/hka/ps/service/PaymentService.java
