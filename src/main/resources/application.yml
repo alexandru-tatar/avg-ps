@@ -16,3 +16,9 @@ spring:
 logging:
   level:
     com.hka.payment: INFO
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+  api-docs:
+    path: /api-docs

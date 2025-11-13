@@ -7,7 +7,6 @@ import com.hka.ps.domain.Payment;
 import com.hka.ps.domain.PaymentStatus;
 import com.hka.ps.publisher.PsPublisher;
 import com.hka.ps.repo.PaymentRepository;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,11 +17,15 @@ import java.time.Instant;
 import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
 public class PaymentService {
   private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
   private final PsPublisher publisher;
   private final PaymentRepository repository;
+
+  public PaymentService(PsPublisher publisher, PaymentRepository repository) {
+    this.publisher = publisher;
+    this.repository = repository;
+  }
   
   @Transactional
   public Payment authorize(AuthorizeRequest request, String idempotencyKey) {
