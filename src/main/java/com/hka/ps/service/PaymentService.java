@@ -7,8 +7,6 @@ import com.hka.ps.domain.Payment;
 import com.hka.ps.domain.PaymentStatus;
 import com.hka.ps.publisher.PsPublisher;
 import com.hka.ps.repo.PaymentRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +16,6 @@ import java.util.Objects;
 
 @Service
 public class PaymentService {
-  private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
   private final PsPublisher publisher;
   private final PaymentRepository repository;
 
@@ -29,24 +26,18 @@ public class PaymentService {
   
   @Transactional
   public Payment authorize(AuthorizeRequest request, String idempotencyKey) {
-    String log = "Authorize request orderId= " + request.getOrderId() + " amount= " + request.getAmount() + " currency= " +  request.getCurrency() + " idempotencyKey= " + idempotencyKey;
-    logger.info(log);
-    publishLog(log);
+    publisher.publishLog("Authorize request orderId= {}, amount= {}, currency= {}, idempotencyKey: {}", request.getOrderId(), request.getAmount(), request.getCurrency(), idempotencyKey);
     validateAuthorize(request);
 
     Payment existing = findIdempotent(idempotencyKey, request.getOrderId());
     if (existing != null) {
-      String log2 = "Idempotent authorize hit for order " + existing.getOrderId();
-      logger.info(log2);
-      publishLog(log2);
+      publisher.publishLog("Idempotent authorize hit for order: {} ", existing.getOrderId());
       return existing;
     }
 
     Payment payment = repository.findByOrderId(request.getOrderId()).orElseGet(Payment::new);
     if (payment.getId() != null) {
-      String log3 = "Existing payment reused for order " + payment.getOrderId();
-      logger.info(log3);
-      publishLog(log3);
+      publisher.publishLog("Existing payment reused for order: {}", payment.getOrderId());
       return payment;
     }
 
@@ -62,15 +53,13 @@ public class PaymentService {
     payment.setStatus(status);
 
     repository.save(payment);
-    logger.info("Authorization {} for order {}", status, payment.getOrderId());
+    publisher.publishLog("Authorization {} for order {}", status, payment.getOrderId());
     return payment;
   }
 
   @Transactional
   public Payment capture(CaptureRequest request) {
-    String log4 = "Capture request orderId= " + request.getOrderId() + " amount= " + request.getAmount();
-    logger.info(log4);
-    publishLog(log4);
+    publisher.publishLog("Capture request orderId: {} amount: {}", request.getOrderId(), request.getAmount());
     Payment payment = repository.findByOrderId(request.getOrderId())
         .orElseThrow(() -> new IllegalArgumentException("Payment not found for orderId=" + request.getOrderId()));
 
@@ -78,9 +67,7 @@ public class PaymentService {
     ensureAmountMatches(payment.getAmount(), request.getAmount());
 
     if (payment.getStatus() == PaymentStatus.CAPTURED) {
-      String log5 = "Capture idempotent for order " + payment.getOrderId();
-      logger.info(log5);
-      publishLog(log5);
+      publisher.publishLog("Capture idempotent for order: {} ", payment.getOrderId());
       return payment;
     }
     if (payment.getStatus() != PaymentStatus.AUTHORIZED) {
@@ -89,24 +76,20 @@ public class PaymentService {
 
     payment.setStatus(PaymentStatus.CAPTURED);
     payment.setUpdatedAt(Instant.now());
-    String log6 = "Payment captured for order " + payment.getOrderId();
-    logger.info(log6);
-    publishLog(log6);
+    publisher.publishLog("Payment captured for order: {} ", payment.getOrderId());
     return payment;
   }
 
   @Transactional
   public Payment refund(RefundRequest request) {
-    String log7 = "Refund request orderId= " + request.getOrderId() + " amount= " + request.getAmount() + " reason= " + request.getReason();
-    logger.info(log7);
-    publishLog(log7);
+    publisher.publishLog("Refund request orderId: {}, amount: {}, reason: {}", request.getOrderId(), request.getAmount(), request.getReason());
     Payment payment = repository.findByOrderId(request.getOrderId())
         .orElseThrow(() -> new IllegalArgumentException("Payment not found for orderId=" + request.getOrderId()));
 
     validateAmount(request.getAmount());
 
     if (payment.getStatus() == PaymentStatus.REFUNDED) {
-      logger.info("Refund idempotent for order {}", payment.getOrderId());
+      publisher.publishLog("Refund idempotent for order {}", payment.getOrderId());
       return payment;
     }
     if (payment.getStatus() != PaymentStatus.CAPTURED && payment.getStatus() != PaymentStatus.AUTHORIZED) {
@@ -115,12 +98,12 @@ public class PaymentService {
 
     payment.setStatus(PaymentStatus.REFUNDED);
     payment.setUpdatedAt(Instant.now());
-    logger.info("Payment refunded for order {}", payment.getOrderId());
+    publisher.publishLog("Payment refunded for order {}", payment.getOrderId());
     return payment;
   }
 
   public void publishLog(String message) {
-    publisher.publish(message);
+    publisher.publishLog(message);
   }
 
   private Payment findIdempotent(String key, String orderId) {

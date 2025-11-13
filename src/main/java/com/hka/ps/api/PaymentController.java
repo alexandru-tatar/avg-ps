@@ -1,7 +1,5 @@
 package com.hka.ps.api;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +25,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Payments", description = "Endpunkte für Autorisierung, Capture und Refund von Zahlungen")
 public class PaymentController {
 
-  private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
   private static final String IDEMPOTENCY_HEADER = "Idempotency-Key";
 
   private final PaymentService service;
@@ -58,7 +55,6 @@ public class PaymentController {
 
     String msgIn = "POST /payments/authorize orderId= " + request.getOrderId()
         + " idempotencyKey= " + String.valueOf(idempotencyKey);
-    log.info(msgIn);
     service.publishLog(msgIn);
 
     Payment payment = service.authorize(request, idempotencyKey);
@@ -68,7 +64,6 @@ public class PaymentController {
 
     String msgOut = "Authorize result orderId= " + payment.getOrderId()
         + " status= " + status;
-    log.info(msgOut);
     service.publishLog(msgOut);
 
     return ResponseEntity.status(status).body(toResponse(payment));
@@ -88,14 +83,12 @@ public class PaymentController {
   })
   public ResponseEntity<PaymentResponse> capture(@RequestBody CaptureRequest request) {
     String msgIn = "POST /payments/capture orderId= " + request.getOrderId();
-    log.info(msgIn);
     service.publishLog(msgIn);
 
     Payment payment = service.capture(request);
 
     String msgOut = "Capture result orderId= " + payment.getOrderId()
         + " status= " + payment.getStatus();
-    log.info(msgOut);
     service.publishLog(msgOut);
 
     return ResponseEntity.ok(toResponse(payment));
@@ -116,14 +109,12 @@ public class PaymentController {
   public ResponseEntity<PaymentResponse> refund(@RequestBody RefundRequest request) {
     String msgIn = "POST /payments/refund orderId= " + request.getOrderId()
         + " reason= " + request.getReason();
-    log.info(msgIn);
     service.publishLog(msgIn);
 
     Payment payment = service.refund(request);
 
     String msgOut = "Refund result orderId= " + payment.getOrderId()
         + " status= " + payment.getStatus();
-    log.info(msgOut);
     service.publishLog(msgOut);
 
     return ResponseEntity.ok(toResponse(payment));
